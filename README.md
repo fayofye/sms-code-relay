@@ -34,9 +34,31 @@ It works when your phone and PC are on the same Wi-Fi. Apart from Python, there'
 
 ## 2. Set up the iPhone (5 minutes)
 
+Apple changed how automations work in iOS 27, so the steps depend on your version. To check yours, go to **Settings → General → About → iOS Version**.
+
+Either way, you need the **URL** and **Token** from the PC window (step 1.3 above).
+
+### iOS 27
+
+1. Open the **Shortcuts** app and tap **+** to make a new shortcut.
+2. In the list of actions, tap **Automation**, then **Message**.
+3. The trigger reads **When I receive a message where Sender is…**. You don't need a sender: tap the word **Sender** and change it to **Message**. It now reads **Message contains**.
+4. Tap the empty box after **contains**, type `code`, and tap **✓**.
+5. Under the trigger, make sure **Automation** is **on** and **Confirm Before Run** is **off**. This replaced "Run Immediately".
+6. Tap the search bar at the bottom, search for **Get Contents of URL**, and tap it to add it.
+7. Tap **URL** and type the URL from the PC window, for example `http://192.168.1.20:8765/`.
+8. Tap the **›** arrow next to the URL to show more options, then set:
+   - **Method:** tap it and choose **POST**.
+   - **Headers:** tap **Add new header**. Type `X-Token` as the key, and paste the token from the PC window as the value.
+   - **Request Body:** choose **JSON**. Tap **Add new field → Text**, type `text` as the key, then tap the value, choose **Select Variable**, and tap **Message**.
+9. Tap back to save it. It now appears in **All Shortcuts**.
+10. So that it works while your phone is locked, open the shortcut, tap **Edit**, then the **ⓘ** button, then **Privacy**, and turn on **Allow Running When Locked**.
+
+### iOS 26 or earlier
+
 1. Open the **Shortcuts** app and tap the **Automation** tab at the bottom.
 2. Tap **+** (or **New Automation**), scroll down and tap **Message**.
-3. Tap **Message Contains**, type `code`, and tap **Done**. Leave **Sender** as it is.
+3. Tap **Message Contains**, type `code`, and tap **Done**. Leave **Sender** empty: you only need one of the two.
 4. Choose **Run Immediately**. Optionally, turn off **Notify When Run** so you don't get an extra banner each time.
 5. Tap **Next**, then **New Blank Automation**.
 6. Search for **Get Contents of URL** and tap it to add it.
@@ -47,18 +69,21 @@ It works when your phone and PC are on the same Wi-Fi. Apart from Python, there'
    - **Request Body:** JSON. Tap **Add new field → Text**, type `text` as the key, then tap the value and pick **Shortcut Input** from the bar above the keyboard.
 9. Tap **Done**.
 
-Test it by getting a real code sent to you, such as a "text me a code" sign-in. Your PC should show the notification within a couple of seconds.
+### Test it
+
+Get a real code sent to you, such as a "text me a code" sign-in. Your PC should show the notification within a couple of seconds.
 
 The first time it runs, the iPhone may ask to let Shortcuts **find devices on your local network** or **connect to 192.168…**. Tap **Allow**.
 
-Some services say "PIN", "OTP" or "passcode" instead of "code". For those, repeat these steps and type that word in step 3.
+Some services say "PIN", "OTP" or "passcode" instead of "code". For those, make a second shortcut (or automation) the same way, with that word instead of `code`.
 
 ## Troubleshooting
 
 - **Nothing happens on the PC:**
   - Check the phone and PC are on the same Wi-Fi.
   - On the iPhone, go to **Settings → Privacy & Security → Local Network** and make sure **Shortcuts** is on.
-  - Turn **Notify When Run** back on to check that the automation fires at all.
+  - On iOS 27, open the shortcut and check that **Automation** is on, **Confirm Before Run** is off, and **Allow Running When Locked** is on.
+  - On iOS 26 or earlier, turn **Notify When Run** back on to check that the automation fires at all.
 - **The PC is locked:** Windows blocks the clipboard while it's locked, so a code that arrives then is skipped. Unlock first.
 - **It worked, then stopped:** your PC's IP address probably changed. Double-click `install.bat` again to see the new URL, then update it in the Shortcut. To stop the IP changing, reserve it in your router's settings (look for "DHCP reservation").
 - **Windows treats your Wi-Fi as public:** the firewall then blocks the phone. Go to **Settings → Network & Internet → Wi-Fi → (your network)** and set it to **Private**.
@@ -66,7 +91,7 @@ Some services say "PIN", "OTP" or "passcode" instead of "code". For those, repea
 
 ## Uninstall
 
-Double-click **`uninstall.bat`**. That stops the script and removes it from sign-in. Then delete the folder, and delete the automation on your iPhone.
+Double-click **`uninstall.bat`**. That stops the script and removes it from sign-in. Then delete the folder, and delete the shortcut (or automation) on your iPhone.
 
 ## Run it in a window instead
 
