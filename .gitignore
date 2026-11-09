@@ -1,0 +1,3 @@
+# secret created on first run - never commit it
+token.txt
+__pycache__/
