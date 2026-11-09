@@ -60,14 +60,18 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_error(403)
         try:
             length = int(self.headers.get("Content-Length", 0))
-            if not 0 < length <= 10_000:
-                return self.send_error(413)
-            text = str(json.loads(self.rfile.read(length))["text"])
-        except (ValueError, KeyError, TypeError):
+        except ValueError:
             return self.send_error(400)
+        if not 0 <= length <= 10_000:
+            return self.send_error(413)
+        raw = self.rfile.read(length).decode("utf-8", "replace")
+        try:  # search the whole JSON, so a Shortcut with key and value swapped still works
+            text = json.dumps(json.loads(raw), ensure_ascii=False)
+        except ValueError:
+            text = raw  # a plain-text body works too
         code = find_code(text)
         if not code:
-            return self.send_error(422, "no code found")
+            return self.send_error(422, "Connected! No code in this message (normal for a test run)")
         try:
             subprocess.run("clip", input=code, text=True, check=True, creationflags=NO_WINDOW)
         except subprocess.CalledProcessError:  # Windows blocks the clipboard while the PC is locked

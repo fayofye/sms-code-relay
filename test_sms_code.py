@@ -1,4 +1,4 @@
-"""Run: python test_sms_code.py  (puts 482913 on your clipboard and shows two test notifications)"""
+"""Run: python test_sms_code.py  (puts 482913 on your clipboard and shows a few test notifications)"""
 import json
 import os
 import subprocess
@@ -22,19 +22,28 @@ url = f"http://127.0.0.1:{server.server_port}/"
 
 
 def post(token, body):
-    req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"X-Token": token})
+    data = body if isinstance(body, bytes) else json.dumps(body).encode()
+    req = urllib.request.Request(url, data=data, headers={"X-Token": token})
     try:
         return urllib.request.urlopen(req).status
     except urllib.error.HTTPError as e:
         return e.code
 
 
+def clipboard():
+    return subprocess.run(["powershell", "-NoProfile", "-Command", "Get-Clipboard"], capture_output=True, text=True).stdout.strip()
+
+
 assert post("wrong", {"text": "code 111111"}) == 403
-assert post("test-token", {"nope": 1}) == 400
+assert post("test-token", {"nope": 1}) == 422
 assert post("test-token", {"text": "hello"}) == 422
+assert post("test-token", b"") == 422  # a test run from the Shortcut editor, with no message
+assert post("test-token", {"Your code is 771204": "text"}) == 204  # key and value swapped in the Shortcut
+assert clipboard() == "771204"
+assert post("test-token", b"Your code is 553201") == 204  # plain-text body
+assert clipboard() == "553201"
 assert post("test-token", {"text": "Your code is 482913"}) == 204
-clip = subprocess.run(["powershell", "-NoProfile", "-Command", "Get-Clipboard"], capture_output=True, text=True).stdout.strip()
-assert clip == "482913", clip
+assert clipboard() == "482913"
 
 # a second copy must fail to start rather than silently share the port
 try:
