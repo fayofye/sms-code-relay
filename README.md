@@ -1,60 +1,85 @@
 # sms-code-relay
 
-Get the verification codes texted to your iPhone onto your Windows PC's clipboard, so you can paste them with **Ctrl+V**.
+Get the verification codes texted to your iPhone onto your Windows PC, ready to paste.
+
+When a text with a code arrives, your PC shows a notification ("Code 482913 copied") and the code is already on your clipboard. Click the code box and press **Ctrl+V**.
 
 iPhones don't let apps read your texts, so this has two parts:
 
 - **iPhone:** a Shortcuts automation that sends each text containing "code" to your PC.
-- **PC:** `sms_code.py`, a small Python script that finds the code, copies it to the clipboard and beeps.
+- **PC:** a small Python script that runs in the background, finds the code and copies it.
 
-It works while your phone and PC are on the same Wi-Fi. It uses only Python's standard library, so there's nothing to install apart from Python.
+It works when your phone and PC are on the same Wi-Fi. Apart from Python, there's nothing to install.
 
-## Requirements
+## What you need
 
-- Windows 10 or 11
-- [Python 3.8 or newer](https://www.python.org/downloads/)
-- An iPhone with the Shortcuts app (iOS 17 or newer, for "Run Immediately")
+- A Windows 10 or 11 PC
+- [Python 3.8 or newer](https://www.python.org/downloads/). In the installer, tick **Add python.exe to PATH**.
+- An iPhone on iOS 17 or newer
 
-## Set up the PC
+## 1. Set up the PC (2 minutes)
 
-1. Download this repo: click **Code → Download ZIP** and unzip it, or run:
+1. On this page, click **Code → Download ZIP**.
+2. Unzip it somewhere permanent, like your Documents folder. It runs from there, so don't leave it in Downloads.
+3. Double-click **`install.bat`**. A window shows two things the iPhone needs:
 
-   ```bash
-   git clone https://github.com/fayofye/sms-code-relay.git
+   ```
+   Put these in the iPhone Shortcut:
+     URL:   http://192.168.1.20:8765/
+     Token: (a random string, different for every PC)
    ```
 
-2. In that folder, run:
+   Keep that window open while you set up the iPhone. The script now runs hidden in the background and starts again each time you sign in to Windows.
+4. If Windows asks whether to let Python through the firewall, tick **Private networks** and click **Allow access**.
 
-   ```bash
-   python sms_code.py
-   ```
+## 2. Set up the iPhone (5 minutes)
 
-3. It prints a **URL** (like `http://192.168.1.20:8765/`) and a **Token**. Keep the window open.
-4. When Windows Firewall asks about Python, allow it on **Private networks**.
-
-The token is created on first run and saved in `token.txt`. It stops other devices on your network from sending things to your clipboard, so don't share it.
-
-## Set up the iPhone
-
-1. Open **Shortcuts** → **Automation** tab → **+** → **Message**.
-2. Set **Message Contains** to `code`, choose **Run Immediately**, then tap **Next** → **New Blank Automation**.
-3. Add the **Get Contents of URL** action and set:
-   - **URL:** the URL the script printed
+1. Open the **Shortcuts** app and tap the **Automation** tab at the bottom.
+2. Tap **+** (or **New Automation**), scroll down and tap **Message**.
+3. Tap **Message Contains**, type `code`, and tap **Done**. Leave **Sender** as it is.
+4. Choose **Run Immediately**. Optionally, turn off **Notify When Run** so you don't get an extra banner each time.
+5. Tap **Next**, then **New Blank Automation**.
+6. Search for **Get Contents of URL** and tap it to add it.
+7. Tap the blue **URL** field and type the URL from the PC window, for example `http://192.168.1.20:8765/`.
+8. Tap the **›** arrow on the action to show its options, then set:
    - **Method:** POST
-   - **Headers:** `X-Token` = the token the script printed
-   - **Request Body:** JSON, with one Text field named `text` set to **Shortcut Input → Content**
-4. Tap **Done**.
+   - **Headers:** tap **Add new header**. Set the key to `X-Token` and the value to the token from the PC window.
+   - **Request Body:** JSON. Tap **Add new field → Text**, type `text` as the key, then tap the value and pick **Shortcut Input** from the bar above the keyboard.
+9. Tap **Done**.
 
-If some services say "PIN" or "OTP" instead of "code", add a second automation with that word.
+Test it by getting a real code sent to you, such as a "text me a code" sign-in. Your PC should show the notification within a couple of seconds.
 
-## Use it
+The first time it runs, the iPhone may ask to let Shortcuts **find devices on your local network** or **connect to 192.168…**. Tap **Allow**.
 
-When a code arrives, the PC beeps and the console shows `Copied 123456`. Click the code box and press **Ctrl+V**.
+Some services say "PIN", "OTP" or "passcode" instead of "code". For those, repeat these steps and type that word in step 3.
+
+## Troubleshooting
+
+- **Nothing happens on the PC:**
+  - Check the phone and PC are on the same Wi-Fi.
+  - On the iPhone, go to **Settings → Privacy & Security → Local Network** and make sure **Shortcuts** is on.
+  - Turn **Notify When Run** back on to check that the automation fires at all.
+- **The PC is locked:** Windows blocks the clipboard while it's locked, so a code that arrives then is skipped. Unlock first.
+- **It worked, then stopped:** your PC's IP address probably changed. Double-click `install.bat` again to see the new URL, then update it in the Shortcut. To stop the IP changing, reserve it in your router's settings (look for "DHCP reservation").
+- **Windows treats your Wi-Fi as public:** the firewall then blocks the phone. Go to **Settings → Network & Internet → Wi-Fi → (your network)** and set it to **Private**.
+- **Anything else:** look at `sms_code.log` in the folder. It records every request.
+
+## Uninstall
+
+Double-click **`uninstall.bat`**. That stops the script and removes it from sign-in. Then delete the folder, and delete the automation on your iPhone.
+
+## Run it in a window instead
+
+```bash
+python sms_code.py
+```
+
+This shows each code as it arrives, and closing the window stops it. If the background copy is already running, this says so and exits.
 
 ## Security notes
 
-- Codes travel over your home Wi-Fi without encryption. That's fine for short-lived codes on a network you trust; don't use it on public Wi-Fi.
-- Requests without the right token are rejected.
+- Requests without your token are rejected. The token is created on first run and stored in `token.txt`; don't share it.
+- Codes travel over your Wi-Fi without encryption. That's fine for short-lived codes on your home network; don't use it on public Wi-Fi.
 - To use it away from home, install [Tailscale](https://tailscale.com/) on both devices and use the PC's Tailscale IP in the Shortcut.
 
 ## Test
@@ -63,7 +88,7 @@ When a code arrives, the PC beeps and the console shows `Copied 123456`. Click t
 python test_sms_code.py
 ```
 
-This puts `482913` on your clipboard.
+The test puts `482913` on your clipboard and shows two test notifications. Run it while the PC is unlocked.
 
 ## License
 

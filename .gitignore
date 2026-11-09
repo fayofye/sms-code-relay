@@ -1,3 +1,4 @@
 # secret created on first run - never commit it
 token.txt
+sms_code.log
 __pycache__/
